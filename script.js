@@ -7,96 +7,75 @@ document.getElementById("input").addEventListener("keydown", function (e) {
     }
 });
 
+let awaitingWordArtStyle = false;
+let wordArtText = '';
+
 function handleCommand(command) {
     const outputDiv = document.getElementById("output");
     let output = '';
 
-    const args = command.split(' '); // Split the command into parts for complex commands
-    const cmd = args[0].toLowerCase(); // The main command
-    const input = document.getElementById("input");
+    const args = command.split(' ');
+    const cmd = args[0].toLowerCase();
+
+    // Handle word art style selection
+    if (awaitingWordArtStyle) {
+        const styleOption = command.trim().toLowerCase();
+        outputDiv.innerHTML += `<div>${generateWordArt(wordArtText, styleOption)}</div>`;
+        awaitingWordArtStyle = false;
+        wordArtText = '';
+        resetInput();
+        return;
+    }
 
     switch (cmd) {
         case "help":
             output = `Available Commands:
 - help: List all commands
-- date: Show current date and time
-- ls: List files and folders
-- echo [text]: Print the provided text
+- word art [text]: Generate big word art. Choose from four styles (shown after command).
 - clear: Clear the terminal screen
-- weather: Show a weather message
+- echo [text]: Print the provided text
 - matrix: Start a Matrix-style rain effect
-- word art [text]: Generate ASCII Word Art for the text
-- calc [expression]: Evaluate a math expression (e.g., calc 2+2)
-- joke: Show a random joke
-- countdown [seconds]: Start a countdown
-- reverse [text]: Reverse the given text
-- shutdown: Display a fake shutdown message
 ... and more!`;
-            break;
-
-        case "date":
-            output = `Current Date and Time: ${new Date().toLocaleString()}`;
-            break;
-
-        case "ls":
-            output = "Documents  Downloads  Music  Pictures  Videos";
-            break;
-
-        case "echo":
-            output = args.slice(1).join(' ') || "You didn't provide any text to echo!";
             break;
 
         case "clear":
             outputDiv.innerHTML = '';
-            return; // Don't add a new input line if cleared
-
-        case "matrix":
-            startMatrixRain();
             return;
 
         case "word":
             if (args[1] === "art") {
-                const text = args.slice(2).join(' ');
-                output = text ? generateWordArt(text) : "Usage: word art [text]";
+                wordArtText = args.slice(2).join(' ');
+                if (wordArtText) {
+                    output = `
+Choose a style for "${wordArtText}":
+[A] Style 1:
+${generateWordArtPreview('ABC', 'style1')}
+
+[B] Style 2:
+${generateWordArtPreview('ABC', 'style2')}
+
+[C] Style 3:
+${generateWordArtPreview('ABC', 'style3')}
+
+[D] Style 4:
+${generateWordArtPreview('ABC', 'style4')}
+Type 'A', 'B', 'C', or 'D' to choose a style.
+                    `;
+                    awaitingWordArtStyle = true;
+                } else {
+                    output = "Usage: word art [text]";
+                }
             } else {
                 output = "Unknown command. Did you mean 'word art [text]'?";
             }
             break;
 
-        case "calc":
-            try {
-                const expression = args.slice(1).join(' ');
-                const result = eval(expression); // Simple math evaluation
-                output = `Result: ${result}`;
-            } catch (error) {
-                output = "Invalid math expression. Example: calc 2+2";
-            }
-            break;
-
-        case "joke":
-            output = "Why don't scientists trust atoms? Because they make up everything!";
-            break;
-
-        case "countdown":
-            const seconds = parseInt(args[1], 10);
-            if (!isNaN(seconds)) {
-                countdown(seconds);
-            } else {
-                output = "Invalid countdown duration. Example: countdown 5";
-            }
+        case "matrix":
+            startMatrixRain();
             return;
 
-        case "reverse":
-            const textToReverse = args.slice(1).join(' ');
-            output = textToReverse.split('').reverse().join('') || "No text provided to reverse!";
-            break;
-
-        case "shutdown":
-            output = "Shutting down... (Just kidding!)";
-            break;
-
         default:
-            output = `"${command}" is not recognized as a valid command. Type 'help' for a list of commands.`;
+            output = `"${command}" is not recognized. Type 'help' for available commands.`;
             break;
     }
 
@@ -118,21 +97,43 @@ function resetInput() {
     });
 }
 
-// Countdown function
-function countdown(seconds) {
-    let remaining = seconds;
-    const outputDiv = document.getElementById("output");
-    const interval = setInterval(() => {
-        outputDiv.innerHTML += `<div>Time remaining: ${remaining} seconds</div>`;
-        outputDiv.scrollTop = outputDiv.scrollHeight;
-        remaining--;
+function generateWordArt(text, style) {
+    switch (style) {
+        case 'a':
+        case 'style1':
+            return text.toUpperCase()
+                .split('')
+                .map(char => `  ${char}   ${char}  \n ${char}${char}${char}${char}${char} \n  ${char}   ${char} `)
+                .join('\n');
 
-        if (remaining < 0) {
-            clearInterval(interval);
-            outputDiv.innerHTML += "<div>Time's up!</div>";
-            outputDiv.scrollTop = outputDiv.scrollHeight;
-        }
-    }, 1000);
+        case 'b':
+        case 'style2':
+            return text.toUpperCase()
+                .split('')
+                .map(char => `###   ###\n####  ####\n###   ###\n##########`)
+                .join('\n');
+
+        case 'c':
+        case 'style3':
+            return text.toUpperCase()
+                .split('')
+                .map(char => `** ${char} **\n** ${char} **\n***${char}***`)
+                .join('\n');
+
+        case 'd':
+        case 'style4':
+            return text.toUpperCase()
+                .split('')
+                .map(char => `==${char}==\n=${char}===${char}=\n==${char}==`)
+                .join('\n');
+
+        default:
+            return `Invalid style selected. Use 'A', 'B', 'C', or 'D'.`;
+    }
+}
+
+function generateWordArtPreview(text, style) {
+    return generateWordArt(text, style);
 }
 
 // Matrix rain effect
@@ -176,18 +177,3 @@ function startMatrixRain() {
     }, 10000);
 }
 
-// Word Art Generator
-function generateWordArt(text) {
-    const chars = text.toUpperCase().split('');
-    const artLines = chars.map(char => {
-        return char
-            ? `
-  ${char}   ${char}  
- ${char}${char}${char}${char}${char}  
-  ${char}   ${char}  
- ${char}   ${char}  
-`.trim()
-            : '';
-    });
-    return artLines.join('\n');
-}
