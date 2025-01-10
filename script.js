@@ -13,6 +13,7 @@ function handleCommand(command) {
 
     const args = command.split(' '); // Split the command into parts for complex commands
     const cmd = args[0].toLowerCase(); // The main command
+    const input = document.getElementById("input");
 
     switch (cmd) {
         case "help":
@@ -24,20 +25,13 @@ function handleCommand(command) {
 - clear: Clear the terminal screen
 - weather: Show a weather message
 - matrix: Start a Matrix-style rain effect
+- word art [text]: Generate ASCII Word Art for the text
 - calc [expression]: Evaluate a math expression (e.g., calc 2+2)
-- trivia: Start a trivia game
-- game: Play a number guessing game
 - joke: Show a random joke
-- ascii art [text]: Render ASCII art for text
 - countdown [seconds]: Start a countdown
-- random: Generate a random number
 - reverse [text]: Reverse the given text
-- alarm [seconds]: Set an alarm
-- fortune: Show a random fortune
 - shutdown: Display a fake shutdown message
-- greet [name]: Greet someone by name
-- say [text]: Repeat the text back
-... and more to come!`;
+... and more!`;
             break;
 
         case "date":
@@ -60,6 +54,15 @@ function handleCommand(command) {
             startMatrixRain();
             return;
 
+        case "word":
+            if (args[1] === "art") {
+                const text = args.slice(2).join(' ');
+                output = text ? generateWordArt(text) : "Usage: word art [text]";
+            } else {
+                output = "Unknown command. Did you mean 'word art [text]'?";
+            }
+            break;
+
         case "calc":
             try {
                 const expression = args.slice(1).join(' ');
@@ -70,31 +73,8 @@ function handleCommand(command) {
             }
             break;
 
-        case "trivia":
-            startTriviaGame();
-            return;
-
-        case "game":
-            startNumberGuessingGame();
-            return;
-
         case "joke":
             output = "Why don't scientists trust atoms? Because they make up everything!";
-            break;
-
-        case "ascii":
-            if (args[1] === "art") {
-                output = `
-   _____ _____ _____
-  / ____|  __ \\_   _|
- | (___ | |__) || |
-  \\___ \\|  ___/ | |
-  ____) | |    _| |_
- |_____/|_|   |_____|
-`;
-            } else {
-                output = "Usage: ascii art [text]";
-            }
             break;
 
         case "countdown":
@@ -106,40 +86,13 @@ function handleCommand(command) {
             }
             return;
 
-        case "random":
-            output = `Random Number: ${Math.floor(Math.random() * 100)}`;
-            break;
-
         case "reverse":
             const textToReverse = args.slice(1).join(' ');
             output = textToReverse.split('').reverse().join('') || "No text provided to reverse!";
             break;
 
-        case "alarm":
-            const alarmSeconds = parseInt(args[1], 10);
-            if (!isNaN(alarmSeconds)) {
-                output = `Alarm set for ${alarmSeconds} seconds!`;
-                setTimeout(() => alert("Time's up!"), alarmSeconds * 1000);
-            } else {
-                output = "Invalid alarm duration. Example: alarm 10";
-            }
-            break;
-
-        case "fortune":
-            output = "Your future looks bright, full of exciting projects!";
-            break;
-
         case "shutdown":
             output = "Shutting down... (Just kidding!)";
-            break;
-
-        case "greet":
-            const name = args[1] || "stranger";
-            output = `Hello, ${name}! Welcome to the terminal.`;
-            break;
-
-        case "say":
-            output = args.slice(1).join(' ') || "You didn't say anything!";
             break;
 
         default:
@@ -149,15 +102,20 @@ function handleCommand(command) {
 
     outputDiv.innerHTML += `<div>${output}</div>`;
     outputDiv.scrollTop = outputDiv.scrollHeight; // Scroll to bottom
-    addNewInputLine();
+    resetInput();
 }
 
-function addNewInputLine() {
-    const inputLine = document.createElement('div');
-    inputLine.classList.add('input-line');
-    inputLine.innerHTML = '<span class="prompt">C:\\></span><input type="text" autofocus>';
-    document.querySelector('.terminal').appendChild(inputLine);
-    inputLine.querySelector('input').focus();
+function resetInput() {
+    const inputLine = document.getElementById("inputLine");
+    inputLine.innerHTML = '<span class="prompt">C:\\></span><input type="text" id="input" autofocus>';
+    document.getElementById("input").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            const inputValue = e.target.value.trim();
+            e.preventDefault();
+            handleCommand(inputValue);
+            e.target.value = "";
+        }
+    });
 }
 
 // Countdown function
@@ -218,7 +176,18 @@ function startMatrixRain() {
     }, 10000);
 }
 
-// Trivia Game
-function startTriviaGame() {
-    alert("Trivia: What's the capital of France? (Type your answer in the terminal)");
+// Word Art Generator
+function generateWordArt(text) {
+    const chars = text.toUpperCase().split('');
+    const artLines = chars.map(char => {
+        return char
+            ? `
+  ${char}   ${char}  
+ ${char}${char}${char}${char}${char}  
+  ${char}   ${char}  
+ ${char}   ${char}  
+`.trim()
+            : '';
+    });
+    return artLines.join('\n');
 }
