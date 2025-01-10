@@ -1,6 +1,6 @@
-document.getElementById("input").addEventListener("keydown", function(e) {
+document.getElementById("input").addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
-        const inputValue = e.target.value;
+        const inputValue = e.target.value.trim();
         e.preventDefault();
         handleCommand(inputValue);
         e.target.value = "";
@@ -11,94 +11,137 @@ function handleCommand(command) {
     const outputDiv = document.getElementById("output");
     let output = '';
 
-    switch (command.toLowerCase()) {
+    const args = command.split(' '); // Split the command into parts for complex commands
+    const cmd = args[0].toLowerCase(); // The main command
+
+    switch (cmd) {
         case "help":
             output = `Available Commands:
-- help
-- date
-- ls
-- echo
-- clear
-- weather
-- greet [name]
-- joke
-- fortune
-- ascii art [text]
-- ping [host]
-- countdown [seconds]
-- time
-- random
-- reverse [text]
-- calc [expression]
-- play music [track]
-- say [text]
-- alarm [seconds]
-- shutdown
-... and many more!`;
+- help: List all commands
+- date: Show current date and time
+- ls: List files and folders
+- echo [text]: Print the provided text
+- clear: Clear the terminal screen
+- weather: Show a weather message
+- matrix: Start a Matrix-style rain effect
+- calc [expression]: Evaluate a math expression (e.g., calc 2+2)
+- trivia: Start a trivia game
+- game: Play a number guessing game
+- joke: Show a random joke
+- ascii art [text]: Render ASCII art for text
+- countdown [seconds]: Start a countdown
+- random: Generate a random number
+- reverse [text]: Reverse the given text
+- alarm [seconds]: Set an alarm
+- fortune: Show a random fortune
+- shutdown: Display a fake shutdown message
+- greet [name]: Greet someone by name
+- say [text]: Repeat the text back
+... and more to come!`;
             break;
+
         case "date":
             output = `Current Date and Time: ${new Date().toLocaleString()}`;
             break;
+
         case "ls":
-            output = "Documents  Downloads  Pictures  Videos";
+            output = "Documents  Downloads  Music  Pictures  Videos";
             break;
+
         case "echo":
-            output = "This is a cool command prompt!";
+            output = args.slice(1).join(' ') || "You didn't provide any text to echo!";
             break;
+
         case "clear":
             outputDiv.innerHTML = '';
             return; // Don't add a new input line if cleared
-        case "weather":
-            output = "It's always sunny in this terminal!";
+
+        case "matrix":
+            startMatrixRain();
+            return;
+
+        case "calc":
+            try {
+                const expression = args.slice(1).join(' ');
+                const result = eval(expression); // Simple math evaluation
+                output = `Result: ${result}`;
+            } catch (error) {
+                output = "Invalid math expression. Example: calc 2+2";
+            }
             break;
-        case "greet":
-            output = "Hello, User!";
-            break;
+
+        case "trivia":
+            startTriviaGame();
+            return;
+
+        case "game":
+            startNumberGuessingGame();
+            return;
+
         case "joke":
-            output = "Why don't skeletons fight each other? They don't have the guts!";
+            output = "Why don't scientists trust atoms? Because they make up everything!";
             break;
-        case "fortune":
-            output = "You will achieve greatness!";
+
+        case "ascii":
+            if (args[1] === "art") {
+                output = `
+   _____ _____ _____
+  / ____|  __ \\_   _|
+ | (___ | |__) || |
+  \\___ \\|  ___/ | |
+  ____) | |    _| |_
+ |_____/|_|   |_____|
+`;
+            } else {
+                output = "Usage: ascii art [text]";
+            }
             break;
-        case "ascii art hello":
-            output = `
-  _   _      _ _
- | | | | ___| | | ___
- | |_| |/ _ \ | |/ _ \\
- |  _  |  __/ | | (_) |
- |_| |_|\___|_|_|\___/`;
-            break;
-        case "ping google.com":
-            output = "Pinging google.com... Reply from 142.250.185.78: bytes=32 time=14ms TTL=56";
-            break;
-        case "countdown 5":
-            countdown(5);
-            return; // prevent input from being cleared after countdown
-        case "time":
-            output = `Current time: ${new Date().toLocaleTimeString()}`;
-            break;
+
+        case "countdown":
+            const seconds = parseInt(args[1], 10);
+            if (!isNaN(seconds)) {
+                countdown(seconds);
+            } else {
+                output = "Invalid countdown duration. Example: countdown 5";
+            }
+            return;
+
         case "random":
-            output = `Random number: ${Math.floor(Math.random() * 100)}`;
+            output = `Random Number: ${Math.floor(Math.random() * 100)}`;
             break;
-        case "reverse hello":
-            output = "olleh";
+
+        case "reverse":
+            const textToReverse = args.slice(1).join(' ');
+            output = textToReverse.split('').reverse().join('') || "No text provided to reverse!";
             break;
-        case "calc 2+2":
-            output = `Result: 4`;
+
+        case "alarm":
+            const alarmSeconds = parseInt(args[1], 10);
+            if (!isNaN(alarmSeconds)) {
+                output = `Alarm set for ${alarmSeconds} seconds!`;
+                setTimeout(() => alert("Time's up!"), alarmSeconds * 1000);
+            } else {
+                output = "Invalid alarm duration. Example: alarm 10";
+            }
             break;
-        case "play music happy":
-            output = "Now playing: 'Happy' by Pharrell Williams";
+
+        case "fortune":
+            output = "Your future looks bright, full of exciting projects!";
             break;
-        case "say hello":
-            output = "You said: hello";
-            break;
-        case "alarm 10":
-            output = "Alarm set for 10 seconds!";
-            setTimeout(() => alert("Time's up!"), 10000);
-            break;
+
         case "shutdown":
             output = "Shutting down... (Just kidding!)";
             break;
+
+        case "greet":
+            const name = args[1] || "stranger";
+            output = `Hello, ${name}! Welcome to the terminal.`;
+            break;
+
+        case "say":
+            output = args.slice(1).join(' ') || "You didn't say anything!";
+            break;
+
         default:
             output = `"${command}" is not recognized as a valid command. Type 'help' for a list of commands.`;
             break;
@@ -134,3 +177,48 @@ function countdown(seconds) {
     }, 1000);
 }
 
+// Matrix rain effect
+function startMatrixRain() {
+    const body = document.body;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = Array(columns).fill(1);
+
+    function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#0F0";
+        ctx.font = `${fontSize}px monospace`;
+
+        for (let i = 0; i < drops.length; i++) {
+            const text = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.95) {
+                drops[i] = 0;
+            }
+            drops[i]++;
+        }
+    }
+
+    const interval = setInterval(draw, 50);
+
+    setTimeout(() => {
+        clearInterval(interval);
+        document.body.removeChild(canvas);
+    }, 10000);
+}
+
+// Trivia Game
+function startTriviaGame() {
+    alert("Trivia: What's the capital of France? (Type your answer in the terminal)");
+}
